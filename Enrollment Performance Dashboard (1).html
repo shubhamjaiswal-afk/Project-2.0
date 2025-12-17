@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enrollment Performance Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
+    <style>
+        :root {
+            --color-primary: #2563eb;
+            --color-secondary: #10b981;
+            --color-accent: #f59e0b;
+            --color-danger: #ef4444;
+            --color-warning: #f97316;
+            --color-success: #22c55e;
+            --color-bg: #0f172a;
+            --color-surface: #1e293b;
+            --color-border: #334155;
+            --color-text: #f1f5f9;
+            --color-text-secondary: #cbd5e1;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--color-bg) 0%, #1a2f4d 100%);
+            color: var(--color-text);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: slideDown 0.6s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #60a5fa, #34d399);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 1.1em;
+            color: var(--color-text-secondary);
+        }
+
+        .kpi-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+            animation: fadeIn 0.8s ease-out 0.2s both;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .kpi-card {
+            background: linear-gradient(135deg, var(--color-surface), var(--color-surface));
+            border: 1px solid var(--color-border);
+            border-radius: 12px;
+            padding: 25px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--color-primary);
+            box-shadow: 0 10px 30px rgba(37, 99, 235, 0.2);
+        }
+
+        .kpi-icon {
+            font-size: 2.5em;
+            margin-bottom: 15px;
+        }
+
+        .kpi-value {
+            font-size: 2.2em;
+            font-weight: bold;
+            margin: 10px 0;
+            background: linear-gradient(135deg, #60a5fa, #34d399);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .kpi-label {
+            font-size: 0.9em;
+            color: var(--color-text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+            animation: fadeIn 0.8s ease-out 0.4s both;
+        }
+
+        .chart-card {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: 12px;
+            padding: 25px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .chart-card:hover {
+            border-color: var(--color-primary);
+            box-shadow: 0 8px 25px rgba(37, 99, 235, 0.15);
+        }
+
+        .chart-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--color-primary);
+            border-bottom: 2px solid var(--color-border);
+            padding-bottom: 10px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 350px;
+            animation: scaleIn 0.6s ease-out;
+        }
+
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .table-card {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: 12px;
+            padding: 25px;
+            margin-top: 30px;
+            animation: fadeIn 0.8s ease-out 0.6s both;
+        }
+
+        .table-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--color-primary);
+            border-bottom: 2px solid var(--color-border);
+            padding-bottom: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: rgba(37, 99, 235, 0.15);
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--color-primary);
+            border-bottom: 2px solid var(--color-border);
+            text-transform: uppercase;
+            font-size: 0.85em;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        tr:hover {
+            background: rgba(37, 99, 235, 0.08);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .status-high {
+            background: rgba(34, 197, 94, 0.2);
+            color: var(--color-success);
+        }
+
+        .status-medium {
+            background: rgba(249, 115, 22, 0.2);
+            color: var(--color-warning);
+        }
+
+        .status-low {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--color-danger);
+        }
+
+        .analysis-box {
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(16, 185, 129, 0.1));
+            border-left: 4px solid var(--color-primary);
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 0.95em;
+            line-height: 1.6;
+            animation: fadeIn 0.8s ease-out 0.8s both;
+        }
+
+        .analysis-title {
+            font-weight: 600;
+            color: var(--color-primary);
+            margin-bottom: 10px;
+        }
+
+        .insight {
+            margin: 8px 0;
+            padding-left: 15px;
+            border-left: 2px solid var(--color-secondary);
+        }
+
+        .highlight {
+            color: var(--color-accent);
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .kpi-value {
+                font-size: 1.8em;
+            }
+        }
+
+        .top-performers {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .performer {
+            background: rgba(37, 99, 235, 0.15);
+            border: 1px solid rgba(37, 99, 235, 0.3);
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+        }
+
+        .performer:hover {
+            background: rgba(37, 99, 235, 0.25);
+            transform: scale(1.05);
+        }
+
+        .performer-name {
+            font-weight: 600;
+            color: var(--color-primary);
+        }
+
+        .performer-value {
+            color: var(--color-secondary);
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 Enrollment Performance Dashboard</h1>
+            <p class="subtitle">Comprehensive Analysis: March - December 2025</p>
+        </header>
+
+        <!-- KPI Section -->
+        <div class="kpi-section">
+            <div class="kpi-card">
+                <div class="kpi-icon">📈</div>
+                <div class="kpi-label">Total Enrollments</div>
+                <div class="kpi-value">893</div>
+                <p style="font-size: 0.85em; color: var(--color-text-secondary);">Mar-Dec 2025</p>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-icon">📅</div>
+                <div class="kpi-label">December Enrollments</div>
+                <div class="kpi-value">131</div>
+                <p style="font-size: 0.85em; color: var(--color-text-secondary);">14.7% of total</p>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-icon">👥</div>
+                <div class="kpi-label">Manager Count</div>
+                <div class="kpi-value">5</div>
+                <p style="font-size: 0.85em; color: var(--color-text-secondary);">Active Managers</p>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-icon">🎓</div>
+                <div class="kpi-label">Universities</div>
+                <div class="kpi-value">11</div>
+                <p style="font-size: 0.85em; color: var(--color-text-secondary);">Partner Institutions</p>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-icon">🚀</div>
+                <div class="kpi-label">Top University</div>
+                <div class="kpi-value">Shoolini</div>
+                <p style="font-size: 0.85em; color: var(--color-text-secondary);">400 Enrollments</p>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-icon">⭐</div>
+                <div class="kpi-label">Top Manager</div>
+                <div class="kpi-value">avinash.kumar</div>
+                <p style="font-size: 0.85em; color: var(--color-text-secondary);">46 Dec Enrollments</p>
+            </div>
+        </div>
+
+        <!-- Charts Grid -->
+        <div class="charts-grid">
+            <div class="chart-card">
+                <div class="chart-title">📊 Overall Enrollment Distribution</div>
+                <div class="chart-container">
+                    <canvas id="overallChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-title">👨‍💼 Manager-wise December Performance</div>
+                <div class="chart-container">
+                    <canvas id="managerChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card full-width">
+                <div class="chart-title">🎓 University-wise Total Enrollments (Mar-Dec)</div>
+                <div class="chart-container" style="height: 400px;">
+                    <canvas id="universityChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-title">👥 TL/ATL Achievement Distribution</div>
+                <div class="chart-container">
+                    <canvas id="tlChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Tables -->
+        <div class="table-card">
+            <div class="table-title">👨‍💼 Manager-wise Performance Breakdown</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Manager</th>
+                        <th>December Enrollments</th>
+                        <th>Performance %</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>avinash.kumar</strong></td>
+                        <td>46</td>
+                        <td>35.1%</td>
+                        <td><span class="status-badge status-high">⭐ Excellent</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>karan.mehta</strong></td>
+                        <td>38</td>
+                        <td>29.0%</td>
+                        <td><span class="status-badge status-high">✓ Good</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>narender.sharma</strong></td>
+                        <td>27</td>
+                        <td>20.6%</td>
+                        <td><span class="status-badge status-medium">⚠ Average</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>anshul.kumar</strong></td>
+                        <td>14</td>
+                        <td>10.7%</td>
+                        <td><span class="status-badge status-medium">⚠ Below Avg</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>mudit.jethwani</strong></td>
+                        <td>6</td>
+                        <td>4.6%</td>
+                        <td><span class="status-badge status-low">❌ Critical</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="table-card">
+            <div class="table-title">🎓 University-wise Performance (Total & December)</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>University</th>
+                        <th>Total (Mar-Dec)</th>
+                        <th>December</th>
+                        <th>% of Total</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Shoolini University</strong></td>
+                        <td>400</td>
+                        <td>29</td>
+                        <td>44.8%</td>
+                        <td><span class="status-badge status-high">🏆 Top</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Amity University</strong></td>
+                        <td>152</td>
+                        <td>17</td>
+                        <td>17.0%</td>
+                        <td><span class="status-badge status-high">✓ Strong</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Galgotias University</strong></td>
+                        <td>143</td>
+                        <td>26</td>
+                        <td>16.0%</td>
+                        <td><span class="status-badge status-high">✓ Strong</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Manipal University</strong></td>
+                        <td>82</td>
+                        <td>32</td>
+                        <td>9.2%</td>
+                        <td><span class="status-badge status-medium">⚠ Growing</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>VIT University</strong></td>
+                        <td>42</td>
+                        <td>5</td>
+                        <td>4.7%</td>
+                        <td><span class="status-badge status-medium">⚠ Moderate</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Sikkim Manipal University</strong></td>
+                        <td>36</td>
+                        <td>9</td>
+                        <td>4.0%</td>
+                        <td><span class="status-badge status-medium">⚠ Moderate</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Others (LPU, DDU, Jain, Dr. DY Patil, Jagannath)</strong></td>
+                        <td>38</td>
+                        <td>13</td>
+                        <td>4.3%</td>
+                        <td><span class="status-badge status-medium">⚠ Developing</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="table-card">
+            <div class="table-title">👥 TL/ATL Achievement Breakdown</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>TL / ATL Name</th>
+                        <th>December Achievements</th>
+                        <th>% of Total</th>
+                        <th>Performance Tier</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>pushpendra shekhawat</strong></td>
+                        <td>20</td>
+                        <td>18.0%</td>
+                        <td><span class="status-badge status-high">🥇 Top Performer</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>kartik</strong></td>
+                        <td>17</td>
+                        <td>15.3%</td>
+                        <td><span class="status-badge status-high">🥈 Strong</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>rohith philip</strong></td>
+                        <td>17</td>
+                        <td>15.3%</td>
+                        <td><span class="status-badge status-high">🥈 Strong</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>amartya singh1</strong></td>
+                        <td>15</td>
+                        <td>13.5%</td>
+                        <td><span class="status-badge status-high">✓ Good</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>muskan gaba</strong></td>
+                        <td>15</td>
+                        <td>13.5%</td>
+                        <td><span class="status-badge status-high">✓ Good</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>divya singh</strong></td>
+                        <td>12</td>
+                        <td>10.8%</td>
+                        <td><span class="status-badge status-medium">⚠ Average</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>sarthak sharma</strong></td>
+                        <td>7</td>
+                        <td>6.3%</td>
+                        <td><span class="status-badge status-medium">⚠ Below Avg</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Prakash Rathord</strong></td>
+                        <td>5</td>
+                        <td>4.5%</td>
+                        <td><span class="status-badge status-medium">⚠ Below Avg</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>salony purohit</strong></td>
+                        <td>3</td>
+                        <td>2.7%</td>
+                        <td><span class="status-badge status-low">❌ Critical</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Analysis Section -->
+        <div class="analysis-box">
+            <div class="analysis-title">📈 Key Insights & Analysis</div>
+            
+            <div class="insight">
+                <strong>1. Overall Performance Trend:</strong> Total enrollments from March to December stand at <span class="highlight">893</span>, with December accounting for <span class="highlight">131 (14.7%)</span> of the total volume. This suggests strong momentum heading into year-end.
+            </div>
+
+            <div class="insight">
+                <strong>2. Manager Performance Ranking:</strong>
+                <ul style="margin-left: 20px; margin-top: 8px;">
+                    <li><strong>Top Performer:</strong> avinash.kumar (46 enrollments, 35.1%) - Consistently high performer</li>
+                    <li><strong>Strong Contributor:</strong> karan.mehta (38 enrollments, 29.0%) - Solid volume contributor</li>
+                    <li><strong>Critical Concern:</strong> mudit.jethwani (6 enrollments, 4.6%) - Requires immediate intervention</li>
+                </ul>
+            </div>
+
+            <div class="insight">
+                <strong>3. University Portfolio:</strong> <span class="highlight">Shoolini University dominates</span> with <span class="highlight">400 total enrollments (44.8%)</span>, representing nearly half of all enrollments. In December, Manipal University (32) led, followed by Galgotias (26).
+            </div>
+
+            <div class="insight">
+                <strong>4. TL/ATL Team Dynamics:</strong> Top performers are <span class="highlight">pushpendra shekhawat (20)</span>, kartik (17), and rohith philip (17). However, <span class="highlight">salony purohit (3) and Prakash Rathord (5)</span> need support and mentoring to improve output.
+            </div>
+
+            <div class="insight">
+                <strong>5. December Deep Dive:</strong> December achievements (131 from managers, 111 from TLs) show a <span class="highlight">16 enrollment gap</span> - suggesting either overlap or unattributed enrollments in the data.
+            </div>
+
+            <div class="insight">
+                <strong>6. Strategic Recommendations:</strong>
+                <ul style="margin-left: 20px; margin-top: 8px;">
+                    <li>🎯 Focus on mudit.jethwani - implement 1:1 coaching and peer mentoring</li>
+                    <li>🚀 Leverage avinash.kumar as a mentor for underperformers</li>
+                    <li>🏢 Strengthen relationships with top 3 universities (Shoolini, Amity, Galgotias)</li>
+                    <li>👥 Support salony purohit and Prakash Rathord with additional resources</li>
+                    <li>📊 Investigate the 16-enrollment discrepancy between Manager and TL counts</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Chart.js Default Options
+        Chart.defaults.font.family = "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+        Chart.defaults.color = '#cbd5e1';
+
+        // Color palette
+        const colors = {
+            primary: '#2563eb',
+            secondary: '#10b981',
+            accent: '#f59e0b',
+            danger: '#ef4444',
+            warning: '#f97316',
+            success: '#22c55e',
+            blue: '#3b82f6',
+            green: '#10b981',
+            purple: '#a855f7',
+            pink: '#ec4899',
+            indigo: '#6366f1',
+            cyan: '#06b6d4'
+        };
+
+        // Overall Enrollment Distribution
+        const overallCtx = document.getElementById('overallChart').getContext('2d');
+        new Chart(overallCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['March - November', 'December'],
+                datasets: [{
+                    data: [762, 131],
+                    backgroundColor: [
+                        'rgba(99, 102, 241, 0.8)',
+                        'rgba(34, 197, 94, 0.8)'
+                    ],
+                    borderColor: ['#4f46e5', '#16a34a'],
+                    borderWidth: 2,
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { padding: 20, font: { size: 12, weight: 'bold' } }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((context.parsed / total) * 100).toFixed(1);
+                                return `${context.label}: ${context.parsed} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Manager Performance Chart
+        const managerCtx = document.getElementById('managerChart').getContext('2d');
+        new Chart(managerCtx, {
+            type: 'bar',
+            data: {
+                labels: ['avinash.kumar', 'karan.mehta', 'narender.sharma', 'anshul.kumar', 'mudit.jethwani'],
+                datasets: [{
+                    label: 'December Enrollments',
+                    data: [46, 38, 27, 14, 6],
+                    backgroundColor: [
+                        '#22c55e',
+                        '#10b981',
+                        '#f59e0b',
+                        '#f97316',
+                        '#ef4444'
+                    ],
+                    borderRadius: 8,
+                    borderSkipped: false
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        ticks: { color: '#cbd5e1' },
+                        grid: { color: 'rgba(203, 213, 225, 0.1)' }
+                    },
+                    y: {
+                        ticks: { color: '#cbd5e1', font: { weight: 'bold' } },
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+
+        // University Chart
+        const universityCtx = document.getElementById('universityChart').getContext('2d');
+        new Chart(universityCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Shoolini', 'Amity', 'Galgotias', 'Manipal', 'VIT', 'Sikkim Manipal', 'Dr. DY Patil', 'LPU', 'Jain', 'DDU', 'Jagannath'],
+                datasets: [{
+                    label: 'Total Enrollments (Mar-Dec)',
+                    data: [400, 152, 143, 82, 42, 36, 26, 15, 3, 2, 1],
+                    backgroundColor: [
+                        '#22c55e', '#10b981', '#14b8a6', '#06b6d4', '#0ea5e9',
+                        '#3b82f6', '#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899'
+                    ],
+                    borderRadius: 6,
+                    borderSkipped: false
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { display: true, position: 'top' }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { color: '#cbd5e1' },
+                        grid: { color: 'rgba(203, 213, 225, 0.1)' }
+                    },
+                    x: {
+                        ticks: { color: '#cbd5e1' },
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+
+        // TL Achievement Distribution
+        const tlCtx = document.getElementById('tlChart').getContext('2d');
+        new Chart(tlCtx, {
+            type: 'pie',
+            data: {
+                labels: ['pushpendra shekhawat', 'kartik', 'rohith philip', 'amartya singh1', 'muskan gaba', 'divya singh', 'sarthak sharma', 'Prakash Rathord', 'salony purohit'],
+                datasets: [{
+                    data: [20, 17, 17, 15, 15, 12, 7, 5, 3],
+                    backgroundColor: [
+                        '#22c55e', '#10b981', '#14b8a6', '#06b6d4', '#0ea5e9',
+                        '#3b82f6', '#6366f1', '#8b5cf6', '#ef4444'
+                    ],
+                    borderColor: '#1e293b',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: { padding: 15, font: { size: 11 } }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((context.parsed / total) * 100).toFixed(1);
+                                return `${context.label}: ${context.parsed} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
